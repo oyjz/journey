@@ -3,14 +3,14 @@ package templates
 import (
 	"bytes"
 	"errors"
-	"github.com/kabukky/journey/database"
-	"github.com/kabukky/journey/filenames"
-	"github.com/kabukky/journey/flags"
-	"github.com/kabukky/journey/helpers"
-	"github.com/kabukky/journey/plugins"
-	"github.com/kabukky/journey/structure"
-	"github.com/kabukky/journey/structure/methods"
-	"github.com/kabukky/journey/watcher"
+	"github.com/oyjz/journey/database"
+	"github.com/oyjz/journey/filenames"
+	"github.com/oyjz/journey/flags"
+	"github.com/oyjz/journey/helpers"
+	"github.com/oyjz/journey/plugins"
+	"github.com/oyjz/journey/structure"
+	"github.com/oyjz/journey/structure/methods"
+	"github.com/oyjz/journey/watcher"
 	"io/ioutil"
 	"log"
 	"os"
@@ -41,20 +41,20 @@ func createHelper(helperName []byte, unescaped bool, startPos int, block []byte,
 	for _, arg := range twoPartArgumentResult {
 		if len(arg) == 3 {
 			twoPartArguments = append(twoPartArguments, bytes.Join(arg[1:], []byte("=")))
-			//remove =argument from helper name
+			// remove =argument from helper name
 			helperName = bytes.Replace(helperName, arg[0], []byte(""), 1)
 		}
 	}
 	// Separate arguments (e.g. 'if @blog.title')
 	tags := bytes.Fields(helperName)
 	for index, tag := range tags {
-		//remove "" around tag if present
+		// remove "" around tag if present
 		quoteTagResult := quoteTagChecker.FindSubmatch(tag)
 		if len(quoteTagResult) != 0 {
 			// Get the string inside the quotes (3rd element in array)
 			tag = quoteTagResult[2]
 		}
-		//TODO: This may have to change if the first argument is surrounded by quotes
+		// TODO: This may have to change if the first argument is surrounded by quotes
 		if index == 0 {
 			helper = makeHelper(string(tag), unescaped, startPos, block, children)
 		} else {
@@ -94,11 +94,11 @@ func findHelper(data []byte, allHelpers []structure.Helper) ([]byte, []structure
 		// Check if helper calls for unescaped text (e.g. three brackets - {{{title}}})
 		if bytes.HasPrefix(helperName, []byte("{")) {
 			unescaped = true
-			openTagLength++ //not necessary
+			openTagLength++ // not necessary
 			closeTagLength++
 			helperName = helperName[len([]byte("{")):]
 		}
-		helperName = bytes.Trim(helperName, " ") //make sure there are no trailing whitespaces
+		helperName = bytes.Trim(helperName, " ") // make sure there are no trailing whitespaces
 		// Remove helper from data
 		parts := [][]byte{data[:startPos], data[endPos+closeTagLength:]}
 		data = bytes.Join(parts, []byte(""))
@@ -108,9 +108,9 @@ func findHelper(data []byte, allHelpers []structure.Helper) ([]byte, []structure
 		}
 		// Check if block
 		if bytes.HasPrefix(helperName, []byte("#")) {
-			helperName = helperName[len([]byte("#")):] //remove '#' from helperName
+			helperName = helperName[len([]byte("#")):] // remove '#' from helperName
 			var helper structure.Helper
-			data, helper = findBlock(data, helperName, unescaped, startPos) //only use the data string after the opening tag
+			data, helper = findBlock(data, helperName, unescaped, startPos) // only use the data string after the opening tag
 			allHelpers = append(allHelpers, helper)
 			return findHelper(data, allHelpers)
 		}
@@ -174,7 +174,7 @@ func compileTemplate(data []byte, name string) *structure.Helper {
 	// Handle extend helpers
 	for index, child := range baseHelper.Children {
 		if child.Name == "body" {
-			baseHelper.BodyHelper = &baseHelper.Children[index] //TODO: This handles only one body helper per hbs file. That is a potential bug source, but no theme should be using more than one per file anyway.
+			baseHelper.BodyHelper = &baseHelper.Children[index] // TODO: This handles only one body helper per hbs file. That is a potential bug source, but no theme should be using more than one per file anyway.
 		}
 	}
 	return &baseHelper

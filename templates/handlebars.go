@@ -2,12 +2,12 @@ package templates
 
 import (
 	"bytes"
-	"github.com/kabukky/journey/conversion"
-	"github.com/kabukky/journey/database"
-	"github.com/kabukky/journey/date"
-	"github.com/kabukky/journey/plugins"
-	"github.com/kabukky/journey/structure"
-	"github.com/kabukky/journey/structure/methods"
+	"github.com/oyjz/journey/conversion"
+	"github.com/oyjz/journey/database"
+	"github.com/oyjz/journey/date"
+	"github.com/oyjz/journey/plugins"
+	"github.com/oyjz/journey/structure"
+	"github.com/oyjz/journey/structure/methods"
 	"html"
 	"log"
 	"net/url"
@@ -226,22 +226,22 @@ func page_urlFunc(helper *structure.Helper, values *structure.RequestData) []byt
 				if values.CurrentIndexPage == 2 {
 					if values.CurrentTemplate == 3 { // author
 						buffer.WriteString("/author/")
-						//TODO: Error handling if there is no Posts[values.CurrentPostIndex]
+						// TODO: Error handling if there is no Posts[values.CurrentPostIndex]
 						buffer.WriteString(values.Posts[values.CurrentPostIndex].Author.Slug)
 					} else if values.CurrentTemplate == 2 { // tag
 						buffer.WriteString("/tag/")
-						//TODO: Error handling if there is no Posts[values.CurrentPostIndex]
+						// TODO: Error handling if there is no Posts[values.CurrentPostIndex]
 						buffer.WriteString(values.CurrentTag.Slug)
 					}
 					buffer.WriteString("/")
 				} else {
 					if values.CurrentTemplate == 3 { // author
 						buffer.WriteString("/author/")
-						//TODO: Error handling if there is no Posts[values.CurrentPostIndex]
+						// TODO: Error handling if there is no Posts[values.CurrentPostIndex]
 						buffer.WriteString(values.Posts[values.CurrentPostIndex].Author.Slug)
 					} else if values.CurrentTemplate == 2 { // tag
 						buffer.WriteString("/tag/")
-						//TODO: Error handling if there is no Posts[values.CurrentPostIndex]
+						// TODO: Error handling if there is no Posts[values.CurrentPostIndex]
 						buffer.WriteString(values.CurrentTag.Slug)
 					}
 					page := values.CurrentIndexPage - 1
@@ -754,26 +754,26 @@ func atOddFunc(helper *structure.Helper, values *structure.RequestData) []byte {
 func nameFunc(helper *structure.Helper, values *structure.RequestData) []byte {
 	// If tag (commented out the code for generating a link. Ghost doesn't seem to do that either).
 	if values.CurrentHelperContext == 2 { // tag
-		//var buffer bytes.Buffer
-		//buffer.WriteString("<a href=\"")
-		//buffer.WriteString("/tag/")
-		//buffer.WriteString(values.Posts[values.CurrentPostIndex].Tags[values.CurrentTagIndex].Slug)
-		//buffer.WriteString("/\">")
-		//buffer.Write(evaluateEscape([]byte(values.Posts[values.CurrentPostIndex].Tags[values.CurrentTagIndex].Name), helper.Unescaped))
-		//buffer.WriteString("</a>")
-		//return buffer.Bytes()
+		// var buffer bytes.Buffer
+		// buffer.WriteString("<a href=\"")
+		// buffer.WriteString("/tag/")
+		// buffer.WriteString(values.Posts[values.CurrentPostIndex].Tags[values.CurrentTagIndex].Slug)
+		// buffer.WriteString("/\">")
+		// buffer.Write(evaluateEscape([]byte(values.Posts[values.CurrentPostIndex].Tags[values.CurrentTagIndex].Name), helper.Unescaped))
+		// buffer.WriteString("</a>")
+		// return buffer.Bytes()
 		return evaluateEscape(values.Posts[values.CurrentPostIndex].Tags[values.CurrentTagIndex].Name, helper.Unescaped)
 	}
 	// If author (commented out the code for generating a link. Ghost doesn't seem to do that).
-	//var buffer bytes.Buffer
-	//buffer.WriteString("<a href=\"")
-	//buffer.WriteString("/author/")
-	//buffer.WriteString(values.Author.Slug)
-	//buffer.WriteString("\">")
-	//buffer.Write(evaluateEscape([]byte(values.Author.Name), helper.Unescaped))
-	//buffer.WriteString("</a>")
-	//return buffer.Bytes()
-	//TODO: Error handling if there is no Posts[values.CurrentPostIndex]
+	// var buffer bytes.Buffer
+	// buffer.WriteString("<a href=\"")
+	// buffer.WriteString("/author/")
+	// buffer.WriteString(values.Author.Slug)
+	// buffer.WriteString("\">")
+	// buffer.Write(evaluateEscape([]byte(values.Author.Name), helper.Unescaped))
+	// buffer.WriteString("</a>")
+	// return buffer.Bytes()
+	// TODO: Error handling if there is no Posts[values.CurrentPostIndex]
 	return evaluateEscape(values.Posts[values.CurrentPostIndex].Author.Name, helper.Unescaped)
 }
 
@@ -813,19 +813,19 @@ func foreachFunc(helper *structure.Helper, values *structure.RequestData) []byte
 		case "posts":
 			var buffer bytes.Buffer
 			for index, _ := range values.Posts {
-				//if values.Posts[index].Id != 0 { // If post is not empty (Commented out for now. This was only neccessary in previous versions, when the array length was always the postsPerPage length)
+				// if values.Posts[index].Id != 0 { // If post is not empty (Commented out for now. This was only neccessary in previous versions, when the array length was always the postsPerPage length)
 				values.CurrentPostIndex = index
 				buffer.Write(executeHelper(helper, values, 1)) // context = post
-				//}
+				// }
 			}
 			return buffer.Bytes()
 		case "tags":
 			var buffer bytes.Buffer
 			for index, _ := range values.Posts[values.CurrentPostIndex].Tags {
-				//if values.Posts[values.CurrentPostIndex].Tags[index].Id != 0 { // If tag is not empty (Commented out for now. Not neccessary.)
+				// if values.Posts[values.CurrentPostIndex].Tags[index].Id != 0 { // If tag is not empty (Commented out for now. Not neccessary.)
 				values.CurrentTagIndex = index
 				buffer.Write(executeHelper(helper, values, 2)) // context = tag
-				//}
+				// }
 			}
 			return buffer.Bytes()
 		case "navigation":

@@ -7,10 +7,10 @@ import (
 	"strconv"
 
 	"github.com/dimfeld/httptreemux"
-	"github.com/kabukky/journey/database"
-	"github.com/kabukky/journey/filenames"
-	"github.com/kabukky/journey/structure/methods"
-	"github.com/kabukky/journey/templates"
+	"github.com/oyjz/journey/database"
+	"github.com/oyjz/journey/filenames"
+	"github.com/oyjz/journey/structure/methods"
+	"github.com/oyjz/journey/templates"
 )
 
 func indexHandler(w http.ResponseWriter, r *http.Request, params map[string]string) {
