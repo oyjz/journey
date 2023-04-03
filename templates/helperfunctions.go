@@ -30,12 +30,14 @@ var helperFuctions = map[string]func(*structure.Helper, *structure.RequestData) 
 	"block":            blockFunc,
 
 	// @blog functions
-	"@blog.title":       atBlogDotTitleFunc,
-	"@blog.url":         atBlogDotUrlFunc,
-	"@blog.logo":        atBlogDotLogoFunc,
-	"@blog.cover":       atBlogDotCoverFunc,
-	"@blog.description": atBlogDotDescriptionFunc,
-	"@blog.navigation":  navigationFunc,
+	"@blog.title":         atBlogDotTitleFunc,
+	"@blog.url":           atBlogDotUrlFunc,
+	"@blog.logo":          atBlogDotLogoFunc,
+	"@blog.cover":         atBlogDotCoverFunc,
+	"@blog.description":   atBlogDotDescriptionFunc,
+	"@blog.navigation":    navigationFunc,
+	"@blog.PoweredByText": atBlogDotPoweredByTextFunc,
+	"@blog.PoweredByLink": atBlogDotPoweredByLinkFunc,
 
 	// Post functions
 	"post":       postFunc,
@@ -45,6 +47,7 @@ var helperFuctions = map[string]func(*structure.Helper, *structure.RequestData) 
 	"post_class": post_classFunc,
 	"featured":   featuredFunc,
 	"id":         idFunc,
+	"hits":       hitsFunc,
 	"post.id":    idFunc,
 
 	// Tag functions
@@ -91,9 +94,19 @@ var helperFuctions = map[string]func(*structure.Helper, *structure.RequestData) 
 
 	// Possible if arguments
 	"posts":           postsFunc,
+	"recommends":      recommendsFunc,
+	"all_tags":        allTagsFunc,
+	"tag_name":        tagNameFunc,
+	"tag_url":         tagUrlFunc,
 	"tags":            tagsFunc,
 	"pagination.prev": prevFunc,
 	"pagination.next": nextFunc,
+	"prev_post":       prevPostFunc,
+	"prev_post.title": prevPostDotTitleFunc,
+	"prev_post.url":   prevPostDotUrlFunc,
+	"next_post":       nextPostFunc,
+	"next_post.title": nextPostDotTitleFunc,
+	"next_post.url":   nextPostDotUrlFunc,
 
 	// Possible plural arguments
 	"pagination.total":    paginationDotTotalFunc,

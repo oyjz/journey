@@ -6,6 +6,7 @@ import (
 
 const stmtUpdatePost = "UPDATE posts SET title = ?, slug = ?, markdown = ?, html = ?, featured = ?, page = ?, status = ?, meta_description = ?, image = ?, updated_at = ?, updated_by = ? WHERE id = ?"
 const stmtUpdatePostPublished = "UPDATE posts SET title = ?, slug = ?, markdown = ?, html = ?, featured = ?, page = ?, status = ?, meta_description = ?, image = ?, updated_at = ?, updated_by = ?, published_at = ?, published_by = ? WHERE id = ?"
+const stmtUpdatePostHits = "UPDATE posts SET hits = ? WHERE id = ?"
 const stmtUpdateSettings = "UPDATE settings SET value = ?, updated_at = ?, updated_by = ? WHERE key = ?"
 const stmtUpdateUser = "UPDATE users SET name = ?, slug = ?, email = ?, image = ?, cover = ?, bio = ?, website = ?, location = ?, updated_at = ?, updated_by = ? WHERE id = ?"
 const stmtUpdateLastLogin = "UPDATE users SET last_login = ? WHERE id = ?"
@@ -138,6 +139,22 @@ func UpdateUserPassword(id int64, password string, updated_at time.Time, updated
 		return err
 	}
 	_, err = writeDB.Exec(stmtUpdateUserPassword, password, updated_at, updated_by, id)
+	if err != nil {
+		writeDB.Rollback()
+		return err
+	}
+	return writeDB.Commit()
+}
+
+func UpdatePostHits(id int64, hits int64) error {
+	writeDB, err := readDB.Begin()
+	if err != nil {
+		writeDB.Rollback()
+		return err
+	}
+	// If the updated post is published for the first time, add publication date and user
+	_, err = writeDB.Exec(stmtUpdatePostHits, hits, id)
+
 	if err != nil {
 		writeDB.Rollback()
 		return err

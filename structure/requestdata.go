@@ -1,3 +1,4 @@
+//go:build !noplugins
 // +build !noplugins
 
 package structure
@@ -10,6 +11,8 @@ import (
 type RequestData struct {
 	PluginVMs              map[string]*lua.LState
 	Posts                  []Post
+	Recommends             []Post
+	Tags                   []Tag
 	Blog                   *Blog
 	CurrentTag             *Tag
 	CurrentIndexPage       int

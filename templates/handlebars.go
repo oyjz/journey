@@ -2,17 +2,18 @@ package templates
 
 import (
 	"bytes"
+	"html"
+	"log"
+	"net/url"
+	"strconv"
+	"strings"
+
 	"github.com/oyjz/journey/conversion"
 	"github.com/oyjz/journey/database"
 	"github.com/oyjz/journey/date"
 	"github.com/oyjz/journey/plugins"
 	"github.com/oyjz/journey/structure"
 	"github.com/oyjz/journey/structure/methods"
-	"html"
-	"log"
-	"net/url"
-	"strconv"
-	"strings"
 )
 
 // Helper fuctions
@@ -503,6 +504,58 @@ func postsFunc(helper *structure.Helper, values *structure.RequestData) []byte {
 	return []byte{}
 }
 
+func recommendsFunc(helper *structure.Helper, values *structure.RequestData) []byte {
+	if len(values.Recommends) > 0 {
+		return []byte{1}
+	}
+	return []byte{}
+}
+
+func allTagsFunc(helper *structure.Helper, values *structure.RequestData) []byte {
+	if len(values.Tags) > 0 {
+		return []byte{1}
+	}
+	return []byte{}
+}
+
+func prevPostFunc(helper *structure.Helper, values *structure.RequestData) []byte {
+	if len(values.Posts[values.CurrentPostIndex].PrevPost.Title) > 0 {
+		return []byte{1}
+	}
+	return []byte{}
+}
+
+func prevPostDotTitleFunc(helper *structure.Helper, values *structure.RequestData) []byte {
+	return evaluateEscape(values.Posts[values.CurrentPostIndex].PrevPost.Title, helper.Unescaped)
+}
+
+func prevPostDotUrlFunc(helper *structure.Helper, values *structure.RequestData) []byte {
+	var buffer bytes.Buffer
+	buffer.WriteString("/")
+	buffer.WriteString(values.Posts[values.CurrentPostIndex].PrevPost.Slug)
+	buffer.WriteString("/")
+	return evaluateEscape(buffer.Bytes(), helper.Unescaped)
+}
+
+func nextPostFunc(helper *structure.Helper, values *structure.RequestData) []byte {
+	if len(values.Posts[values.CurrentPostIndex].NextPost.Title) > 0 {
+		return []byte{1}
+	}
+	return []byte{}
+}
+
+func nextPostDotTitleFunc(helper *structure.Helper, values *structure.RequestData) []byte {
+	return evaluateEscape(values.Posts[values.CurrentPostIndex].NextPost.Title, helper.Unescaped)
+}
+
+func nextPostDotUrlFunc(helper *structure.Helper, values *structure.RequestData) []byte {
+	var buffer bytes.Buffer
+	buffer.WriteString("/")
+	buffer.WriteString(values.Posts[values.CurrentPostIndex].NextPost.Slug)
+	buffer.WriteString("/")
+	return evaluateEscape(buffer.Bytes(), helper.Unescaped)
+}
+
 func tagsFunc(helper *structure.Helper, values *structure.RequestData) []byte {
 	if len(values.Posts[values.CurrentPostIndex].Tags) > 0 {
 		separator := ", "
@@ -644,18 +697,20 @@ func excerptFunc(helper *structure.Helper, values *structure.RequestData) []byte
 		}
 		// Default to 50 words excerpt
 		excerpt := conversion.StripTagsFromHtml(values.Posts[values.CurrentPostIndex].Html)
-		words := bytes.Fields(excerpt)
-		if len(words) < 50 {
+		words := []rune(string(excerpt))
+
+		// words := bytes.Fields(excerpt)
+		if len(words) < 120 {
 			return excerpt
 		}
-		return bytes.Join(words[:50], []byte(" "))
+		return []byte(string(words[:120]) + " ...")
 	}
 	return []byte{}
 }
 
 func dateFunc(helper *structure.Helper, values *structure.RequestData) []byte {
 	showPublicationDate := false
-	timeFormat := "MMM Do, YYYY" // Default time format
+	timeFormat := "YYYY-MM-DD H:mm:s" // Default time format
 	// If in scope of a post, change default to published date
 	if values.CurrentHelperContext == 1 { // post
 		showPublicationDate = true
@@ -797,6 +852,18 @@ func idFunc(helper *structure.Helper, values *structure.RequestData) []byte {
 	return []byte(strconv.FormatInt(values.Posts[values.CurrentPostIndex].Id, 10))
 }
 
+func hitsFunc(helper *structure.Helper, values *structure.RequestData) []byte {
+	return []byte(strconv.FormatInt(values.Posts[values.CurrentPostIndex].Hits, 10))
+}
+
+func tagNameFunc(helper *structure.Helper, values *structure.RequestData) []byte {
+	return evaluateEscape(values.Tags[values.CurrentTagIndex].Name, helper.Unescaped)
+}
+
+func tagUrlFunc(helper *structure.Helper, values *structure.RequestData) []byte {
+	return []byte("/tag/" + string(evaluateEscape([]byte(values.Tags[values.CurrentTagIndex].Slug), helper.Unescaped)))
+}
+
 func assetFunc(helper *structure.Helper, values *structure.RequestData) []byte {
 	if len(helper.Arguments) != 0 {
 		var buffer bytes.Buffer
@@ -815,6 +882,24 @@ func foreachFunc(helper *structure.Helper, values *structure.RequestData) []byte
 			for index, _ := range values.Posts {
 				// if values.Posts[index].Id != 0 { // If post is not empty (Commented out for now. This was only neccessary in previous versions, when the array length was always the postsPerPage length)
 				values.CurrentPostIndex = index
+				buffer.Write(executeHelper(helper, values, 1)) // context = post
+				// }
+			}
+			return buffer.Bytes()
+		case "recommends":
+			var buffer bytes.Buffer
+			for index, _ := range values.Recommends {
+				// if values.Posts[index].Id != 0 { // If post is not empty (Commented out for now. This was only neccessary in previous versions, when the array length was always the postsPerPage length)
+				values.CurrentPostIndex = index
+				buffer.Write(executeHelper(helper, values, 1)) // context = post
+				// }
+			}
+			return buffer.Bytes()
+		case "all_tags":
+			var buffer bytes.Buffer
+			for index, _ := range values.Tags {
+				// if values.Posts[index].Id != 0 { // If post is not empty (Commented out for now. This was only neccessary in previous versions, when the array length was always the postsPerPage length)
+				values.CurrentTagIndex = index
 				buffer.Write(executeHelper(helper, values, 1)) // context = post
 				// }
 			}
@@ -871,6 +956,14 @@ func unlessFunc(helper *structure.Helper, values *structure.RequestData) []byte 
 
 func atBlogDotTitleFunc(helper *structure.Helper, values *structure.RequestData) []byte {
 	return evaluateEscape(values.Blog.Title, helper.Unescaped)
+}
+
+func atBlogDotPoweredByTextFunc(helper *structure.Helper, values *structure.RequestData) []byte {
+	return []byte(values.Blog.PoweredByText)
+}
+
+func atBlogDotPoweredByLinkFunc(helper *structure.Helper, values *structure.RequestData) []byte {
+	return []byte(values.Blog.PoweredByLink)
 }
 
 func atBlogDotUrlFunc(helper *structure.Helper, values *structure.RequestData) []byte {

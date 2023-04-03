@@ -3,15 +3,16 @@ package templates
 import (
 	"bytes"
 	"errors"
+	"net/http"
+	"path/filepath"
+	"sync"
+
 	"github.com/oyjz/journey/database"
 	"github.com/oyjz/journey/filenames"
 	"github.com/oyjz/journey/helpers"
 	"github.com/oyjz/journey/plugins"
 	"github.com/oyjz/journey/structure"
 	"github.com/oyjz/journey/structure/methods"
-	"net/http"
-	"path/filepath"
-	"sync"
 )
 
 type Templates struct {
@@ -134,8 +135,18 @@ func ShowIndexTemplate(w http.ResponseWriter, r *http.Request, page int) error {
 	if err != nil {
 		return err
 	}
-	requestData := structure.RequestData{Posts: posts, Blog: methods.Blog, CurrentIndexPage: page, CurrentTemplate: 0, CurrentPath: r.URL.Path} // CurrentTemplate = index
-	_, err = w.Write(executeHelper(compiledTemplates.m["index"], &requestData, 0))                                                              // context = index
+	// 获取推荐
+	recommends, err := database.RetrievePostsRecommends(5)
+	if err != nil {
+		return err
+	}
+	// 获取标签
+	tags, err := database.RetrieveTagLimit(20)
+	if err != nil {
+		return err
+	}
+	requestData := structure.RequestData{Posts: posts, Recommends: recommends, Tags: tags, Blog: methods.Blog, CurrentIndexPage: page, CurrentTemplate: 0, CurrentPath: r.URL.Path} // CurrentTemplate = index
+	_, err = w.Write(executeHelper(compiledTemplates.m["index"], &requestData, 0))                                                                                                  // context = index
 	if requestData.PluginVMs != nil {
 		// Put the lua state map back into the pool
 		plugins.LuaPool.Put(requestData.PluginVMs)

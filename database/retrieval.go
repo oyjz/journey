@@ -3,19 +3,22 @@ package database
 import (
 	"database/sql"
 	"encoding/json"
-	"github.com/oyjz/journey/structure"
+	"math/rand"
 	"time"
+
+	"github.com/oyjz/journey/structure"
 )
 
 const stmtRetrievePostsCount = "SELECT count(*) FROM posts WHERE page = 0 AND status = 'published'"
 const stmtRetrievePostsCountByUser = "SELECT count(*) FROM posts WHERE page = 0 AND status = 'published' AND author_id = ?"
 const stmtRetrievePostsCountByTag = "SELECT count(*) FROM posts, posts_tags WHERE posts_tags.post_id = posts.id AND posts_tags.tag_id = ? AND page = 0 AND status = 'published'"
-const stmtRetrievePostsForIndex = "SELECT id, uuid, title, slug, markdown, html, featured, page, status, meta_description, image, author_id, published_at FROM posts WHERE page = 0 AND status = 'published' ORDER BY published_at DESC LIMIT ? OFFSET ?"
-const stmtRetrievePostsForApi = "SELECT id, uuid, title, slug, markdown, html, featured, page, status, meta_description, image, author_id, published_at FROM posts ORDER BY id DESC LIMIT ? OFFSET ?"
-const stmtRetrievePostsByUser = "SELECT id, uuid, title, slug, markdown, html, featured, page, status, meta_description, image, author_id, published_at FROM posts WHERE page = 0 AND status = 'published' AND author_id = ? ORDER BY published_at DESC LIMIT ? OFFSET ?"
-const stmtRetrievePostsByTag = "SELECT posts.id, posts.uuid, posts.title, posts.slug, posts.markdown, posts.html, posts.featured, posts.page, posts.status, posts.meta_description, posts.image, posts.author_id, posts.published_at FROM posts, posts_tags WHERE posts_tags.post_id = posts.id AND posts_tags.tag_id = ? AND page = 0 AND status = 'published' ORDER BY posts.published_at DESC LIMIT ? OFFSET ?"
-const stmtRetrievePostById = "SELECT id, uuid, title, slug, markdown, html, featured, page, status, meta_description, image, author_id, published_at FROM posts WHERE id = ?"
-const stmtRetrievePostBySlug = "SELECT id, uuid, title, slug, markdown, html, featured, page, status, meta_description, image, author_id, published_at FROM posts WHERE slug = ?"
+const stmtRetrievePostsRecommend = "SELECT id, uuid, title, slug, markdown, html, featured, page, status, meta_description, image, author_id, published_at, hits FROM posts WHERE page = 0 AND status = 'published' ORDER BY  random() LIMIT ?"
+const stmtRetrievePostsForIndex = "SELECT id, uuid, title, slug, markdown, html, featured, page, status, meta_description, image, author_id, published_at, hits FROM posts WHERE page = 0 AND status = 'published' ORDER BY published_at DESC LIMIT ? OFFSET ?"
+const stmtRetrievePostsForApi = "SELECT id, uuid, title, slug, markdown, html, featured, page, status, meta_description, image, author_id, published_at, hits FROM posts ORDER BY id DESC LIMIT ? OFFSET ?"
+const stmtRetrievePostsByUser = "SELECT id, uuid, title, slug, markdown, html, featured, page, status, meta_description, image, author_id, published_at, hits FROM posts WHERE page = 0 AND status = 'published' AND author_id = ? ORDER BY published_at DESC LIMIT ? OFFSET ?"
+const stmtRetrievePostsByTag = "SELECT posts.id, posts.uuid, posts.title, posts.slug, posts.markdown, posts.html, posts.featured, posts.page, posts.status, posts.meta_description, posts.image, posts.author_id, posts.published_at, posts.hits FROM posts, posts_tags WHERE posts_tags.post_id = posts.id AND posts_tags.tag_id = ? AND page = 0 AND status = 'published' ORDER BY posts.published_at DESC LIMIT ? OFFSET ?"
+const stmtRetrievePostById = "SELECT id, uuid, title, slug, markdown, html, featured, page, status, meta_description, image, author_id, published_at, hits FROM posts WHERE id = ?"
+const stmtRetrievePostBySlug = "SELECT id, uuid, title, slug, markdown, html, featured, page, status, meta_description, image, author_id, published_at, hits FROM posts WHERE slug = ?"
 const stmtRetrieveUserById = "SELECT id, name, slug, email, image, cover, bio, website, location FROM users WHERE id = ?"
 const stmtRetrieveUserBySlug = "SELECT id, name, slug, email, image, cover, bio, website, location FROM users WHERE slug = ?"
 const stmtRetrieveUserByName = "SELECT id, name, slug, email, image, cover, bio, website, location FROM users WHERE name = ?"
@@ -23,10 +26,13 @@ const stmtRetrieveTags = "SELECT tag_id FROM posts_tags WHERE post_id = ?"
 const stmtRetrieveTagById = "SELECT id, name, slug FROM tags WHERE id = ?"
 const stmtRetrieveTagBySlug = "SELECT id, name, slug FROM tags WHERE slug = ?"
 const stmtRetrieveTagIdBySlug = "SELECT id FROM tags WHERE slug = ?"
+const stmtRetrieveTagLimit = "SELECT id, name, slug FROM tags LIMIT ?"
 const stmtRetrieveHashedPasswordByName = "SELECT password FROM users WHERE name = ?"
 const stmtRetrieveUsersCount = "SELECT count(*) FROM users"
 const stmtRetrieveBlog = "SELECT value FROM settings WHERE key = ?"
 const stmtRetrievePostCreationDateById = "SELECT created_at FROM posts WHERE id = ?"
+const stmtRetrievePrevPostById = "SELECT id, uuid, title, slug FROM posts WHERE id < ? order by id desc limit 1"
+const stmtRetrieveNextPostById = "SELECT id, uuid, title, slug FROM posts WHERE id > ? order by id asc limit 1"
 
 func RetrievePostById(id int64) (*structure.Post, error) {
 	// Retrieve post
@@ -57,6 +63,20 @@ func RetrievePostsByUser(user_id int64, limit int64, offset int64) ([]structure.
 func RetrievePostsByTag(tag_id int64, limit int64, offset int64) ([]structure.Post, error) {
 	// Retrieve posts
 	rows, err := readDB.Query(stmtRetrievePostsByTag, tag_id, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	posts, err := extractPosts(rows)
+	if err != nil {
+		return nil, err
+	}
+	return *posts, nil
+}
+
+func RetrievePostsRecommends(limit int64) ([]structure.Post, error) {
+	// Retrieve posts
+	rows, err := readDB.Query(stmtRetrievePostsRecommend, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +122,7 @@ func extractPosts(rows *sql.Rows) (*[]structure.Post, error) {
 		post := structure.Post{}
 		var userId int64
 		var status string
-		err := rows.Scan(&post.Id, &post.Uuid, &post.Title, &post.Slug, &post.Markdown, &post.Html, &post.IsFeatured, &post.IsPage, &status, &post.MetaDescription, &post.Image, &userId, &post.Date)
+		err := rows.Scan(&post.Id, &post.Uuid, &post.Title, &post.Slug, &post.Markdown, &post.Html, &post.IsFeatured, &post.IsPage, &status, &post.MetaDescription, &post.Image, &userId, &post.Date, &post.Hits)
 		if err != nil {
 			return nil, err
 		}
@@ -138,7 +158,7 @@ func extractPost(row *sql.Row) (*structure.Post, error) {
 	post := structure.Post{}
 	var userId int64
 	var status string
-	err := row.Scan(&post.Id, &post.Uuid, &post.Title, &post.Slug, &post.Markdown, &post.Html, &post.IsFeatured, &post.IsPage, &status, &post.MetaDescription, &post.Image, &userId, &post.Date)
+	err := row.Scan(&post.Id, &post.Uuid, &post.Title, &post.Slug, &post.Markdown, &post.Html, &post.IsFeatured, &post.IsPage, &status, &post.MetaDescription, &post.Image, &userId, &post.Date, &post.Hits)
 	if err != nil {
 		return nil, err
 	}
@@ -162,6 +182,16 @@ func extractPost(row *sql.Row) (*structure.Post, error) {
 	}
 	// Retrieve tags
 	post.Tags, err = RetrieveTags(post.Id)
+	if err != nil {
+		return nil, err
+	}
+	// 上一篇
+	post.PrevPost = retrievePrevPostById(post.Id)
+	// 下一篇
+	post.NextPost = retrieveNextPostById(post.Id)
+	// 更新浏览次数
+	hits := post.Hits + int64(rand.Intn(5))
+	err = UpdatePostHits(post.Id, hits)
 	if err != nil {
 		return nil, err
 	}
@@ -210,6 +240,20 @@ func retrievePostCreationDateById(post_id int64) (*time.Time, error) {
 		return &creationDate, err
 	}
 	return &creationDate, nil
+}
+
+func retrievePrevPostById(post_id int64) *structure.Post {
+	post := structure.Post{}
+	row := readDB.QueryRow(stmtRetrievePrevPostById, post_id)
+	_ = row.Scan(&post.Id, &post.Uuid, &post.Title, &post.Slug)
+	return &post
+}
+
+func retrieveNextPostById(post_id int64) *structure.Post {
+	post := structure.Post{}
+	row := readDB.QueryRow(stmtRetrieveNextPostById, post_id)
+	_ = row.Scan(&post.Id, &post.Uuid, &post.Title, &post.Slug)
+	return &post
 }
 
 func RetrieveUser(id int64) (*structure.User, error) {
@@ -300,6 +344,26 @@ func RetrieveTagIdBySlug(slug string) (int64, error) {
 	return id, nil
 }
 
+func RetrieveTagLimit(limit int64) ([]structure.Tag, error) {
+
+	tags := make([]structure.Tag, 0)
+	// Retrieve tags
+	rows, err := readDB.Query(stmtRetrieveTagLimit, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var tag structure.Tag
+		err := rows.Scan(&tag.Id, &tag.Name, &tag.Slug)
+		if err != nil {
+			return nil, err
+		}
+		tags = append(tags, tag)
+	}
+	return tags, nil
+}
+
 func RetrieveHashedPasswordForUser(name []byte) ([]byte, error) {
 	var hashedPassword []byte
 	row := readDB.QueryRow(stmtRetrieveHashedPasswordByName, name)
@@ -345,6 +409,18 @@ func RetrieveBlog() (*structure.Blog, error) {
 	// ActiveTheme
 	row = readDB.QueryRow(stmtRetrieveBlog, "activeTheme")
 	err = row.Scan(&tempBlog.ActiveTheme)
+	if err != nil {
+		return &tempBlog, err
+	}
+	// PoweredByText
+	row = readDB.QueryRow(stmtRetrieveBlog, "PoweredByText")
+	err = row.Scan(&tempBlog.PoweredByText)
+	if err != nil {
+		return &tempBlog, err
+	}
+	// PoweredByLink
+	row = readDB.QueryRow(stmtRetrieveBlog, "PoweredByLink")
+	err = row.Scan(&tempBlog.PoweredByLink)
 	if err != nil {
 		return &tempBlog, err
 	}

@@ -1,12 +1,12 @@
 package filenames
 
 import (
-	"github.com/oyjz/journey/flags"
-	"github.com/kardianos/osext"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/oyjz/journey/flags"
 )
 
 var (
@@ -89,9 +89,42 @@ func determineAssetPath() string {
 
 func determineExecutablePath() string {
 	// Get the path this executable is located in
-	executablePath, err := osext.ExecutableFolder()
+	// executablePath, err := osext.ExecutableFolder()
+	// if err != nil {
+	// 	log.Fatal("Error: Couldn't determine what directory this executable is in:", err)
+	// }
+	executablePath, err := rootPath()
 	if err != nil {
 		log.Fatal("Error: Couldn't determine what directory this executable is in:", err)
 	}
 	return executablePath
+}
+
+// IsRelease 判断是否是二进制运行
+func isRelease() bool {
+	arg1 := strings.ToLower(os.Args[0])
+	isRelease := false
+	if strings.Index(arg1, "go-build") < 0 {
+		isRelease = true
+	}
+	return isRelease
+}
+
+// RootPath 获取运行目录
+func rootPath() (rootPath string, err error) {
+	// 设置程序根目录
+	rootPath, err = os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	if isRelease() {
+		// 如果是二进制运行，是取对应二进制文件所在目录
+		var ex string
+		ex, err = os.Executable()
+		if err != nil {
+			return "", err
+		}
+		rootPath = filepath.Dir(ex)
+	}
+	return rootPath, nil
 }
