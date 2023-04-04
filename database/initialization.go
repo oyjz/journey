@@ -31,6 +31,7 @@ var stmtInitialization = `CREATE TABLE IF NOT EXISTS
 		language			varchar(6) NOT NULL DEFAULT 'en_US',
 		meta_title			varchar(150),
 		meta_description	varchar(200),
+		hits				integer NOT NULL DEFAULT 0,
 		author_id			integer NOT NULL,
 		created_at			datetime NOT NULL,
 		created_by			integer NOT NULL,
