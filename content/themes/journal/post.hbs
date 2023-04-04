@@ -1,0 +1,50 @@
+{{!< default}}
+
+{{#post}}
+
+<main id="gh-main" class="gh-main">
+    <article class="gh-article {{post_class}}">
+
+        <header class="gh-article-header gh-canvas">
+            <h1 class="gh-article-title">{{title}}</h1>
+            <span class="gh-article-meta">
+                {{#if tags}}{{tags separator=" · "}} &nbsp; -  &nbsp; {{/if}}
+                <time datetime="{{date format="YYYY-MM-DD"}}">{{date}}</time>
+            </span>
+
+
+            <!-- { "feature-image"} -->
+        </header>
+
+        <div class="gh-content gh-canvas">
+            {{content}}
+        </div>
+
+        <footer class="gh-article-footer gh-canvas no-border">
+            <nav class="gh-navigation">
+                <div class="gh-navigation-previous">
+                    {{#if prev_post}}
+                        <a class="gh-navigation-link" href="{{prev_post.url}}">
+                            <span class="gh-navigation-label">{{> icons/arrow-left}} 上一篇</span>
+                            <h4 class="gh-navigation-title">{{prev_post.title}}</h4>
+                        </a>
+                    {{/if}}
+                </div>
+
+                <div class="gh-navigation-middle"></div>
+
+                <div class="gh-navigation-next">
+                    {{#if next_post}}
+                        <a class="gh-navigation-link" href="{{next_post.url}}">
+                            <span class="gh-navigation-label">下一篇 {{> icons/arrow-right}}</span>
+                            <h4 class="gh-navigation-title">{{next_post.title}}</h4>
+                        </a>
+                    {{/if}}
+                </div>
+            </nav>
+        </footer>
+
+    </article>
+</main>
+
+{{/post}}

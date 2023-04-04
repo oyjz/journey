@@ -1,0 +1,70 @@
+{{!< default}}
+
+<main id="gh-main" class="gh-main gh-outer">
+    <div class="gh-inner">
+        <div class="gh-wrapper">
+            <section class="gh-section">
+                <h2 class="gh-section-title">文章列表</h2>
+
+                <div class="gh-feed">
+                    {{#foreach posts}}
+                        {{> loop}}
+                    {{/foreach}}
+                </div>
+
+                {{#if pagination}}
+                <div class="contentlist_pagination">
+                    {{{pagination}}}
+                </div>
+                {{/if}}
+
+            </section>
+
+            <aside class="gh-sidebar">
+                <section class="gh-section">
+                    <h2 class="gh-section-title">关于本站</h2>
+
+                    <div class="gh-about">
+                        <section class="gh-about-wrapper">
+                            <h3 class="gh-about-title">{{@blog.title}}</h3>
+
+                            {{#if @blog.description}}
+                                <p class="gh-about-description">{{@blog.description}}</p>
+                            {{/if}}
+                        </section>
+                    </div>
+
+                </section>
+
+                {{#if recommends}}
+                    <section class="gh-section">
+                        <h3 class="gh-section-title">热门推荐</h3>
+
+                        <div class="gh-featured gh-feed">
+                            {{#foreach recommends}}
+                            <a class="gh-topic-item" href="{{url}}">
+                                <h3 class="gh-topic-name">{{title}}</h3>
+                            </a>
+                            {{/foreach}}
+                        </div>
+                    </section>
+                {{/if}}
+
+
+                {{#if all_tags}}
+                    <section class="gh-section">
+                        <h3 class="gh-section-title">标签</h3>
+
+                        <div class="gh-topic">
+                            {{#foreach all_tags}}
+                                <a class="gh-topic-item" href="{{tag_url}}">
+                                    <h3 class="gh-topic-name">{{tag_name}}</h3>
+                                </a>
+                            {{/foreach}}
+                        </div>
+                    </section>
+                {{/if}}
+            </aside>
+        </div>
+    </div>
+</main>

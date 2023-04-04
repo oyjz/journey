@@ -1,0 +1,14 @@
+<article class="gh-card {{post_class}}">
+    <a class="gh-card-link" href="{{url}}">
+        <header class="gh-card-header">
+            <h2 class="gh-card-title">{{title}}</h2>
+        </header>
+        <div class="gh-card-excerpt">{{excerpt}}</div>
+    </a>
+
+    <footer class="gh-card-meta">
+        <time class="gh-card-date" datetime="{{date format="YYYY-MM-DD"}}">发布时间: {{date}} </time>
+        <span class="gh-card-date">浏览次数: {{hits}} </span>
+        {{#if tags}}<span class="gh-card-date">标签: {{tags separator=", "}}</span>{{/if}}
+    </footer>
+</article>
